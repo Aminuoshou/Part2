@@ -30,27 +30,40 @@ ARCHITECTURE rtl OF combined_mem IS
     TYPE memory_data IS ARRAY (0 TO 1023) OF STD_LOGIC_VECTOR(7 DOWNTO 0);
     SIGNAL RAM : memory_data := (
         -- Program (little-endian)
-        
-        -- 0x00300093   addi x1, x0, 3
-        0  => x"93", 1  => x"00", 2  => x"30", 3  => x"00",
-        
-        -- 0x00400113   addi x2, x0, 4
-        4  => x"13", 5  => x"01", 6  => x"40", 7  => x"00",
-        
-        -- [MODIFIED] 0x422081B3   mul x3, x1, x2 (Bit 30 set to '1' for custom logic)
-        -- Original was 0x022081B3. Changed 0x02 to 0x42.
-        8  => x"B3", 9  => x"81", 10 => x"20", 11 => x"42",
-        
-        -- [MODIFIED] 0x0011D463   bge x3, x1, 8
-        -- Replaces incorrect BEQ instruction. 
-        12 => x"63", 13 => x"D4", 14 => x"11", 15 => x"00",
-        
-        -- 0x00100213   addi x4, x0, 1 (should be skipped when branch taken)
-        16 => x"13", 17 => x"02", 18 => x"10", 19 => x"00",
-        
+
+        -- 0x04000213   addi x4, x0, 64  ; data base at byte address 0x40
+        0  => x"13", 1  => x"02", 2  => x"00", 3  => x"04",
+
+        -- 0x00500093   addi x1, x0, 5   ; operand A
+        4  => x"93", 5  => x"00", 6  => x"50", 7  => x"00",
+
+        -- 0x00A00113   addi x2, x0, 10  ; operand B
+        8  => x"13", 9  => x"01", 10 => x"A0", 11 => x"00",
+
+        -- 0x002081B3   add x3, x1, x2   ; sum = 15
+        12 => x"B3", 13 => x"81", 14 => x"20", 15 => x"00",
+
+        -- 0x00322023   sw x3, 0(x4)      ; store sum to data area
+        16 => x"23", 17 => x"20", 18 => x"32", 19 => x"00",
+
+        -- 0x00022303   lw x6, 0(x4)      ; load stored sum
+        20 => x"03", 21 => x"23", 22 => x"02", 23 => x"00",
+
+        -- 0x021303B3   mul x7, x6, x1    ; product = 15 * 5 = 75
+        24 => x"B3", 25 => x"03", 26 => x"13", 27 => x"02",
+
+        -- 0x0023D463   bge x7, x2, 8     ; branch taken, skip next addi
+        28 => x"63", 29 => x"D4", 30 => x"23", 31 => x"00",
+
+        -- 0x00100493   addi x9, x0, 1    ; only executes if branch not taken
+        32 => x"93", 33 => x"04", 34 => x"10", 35 => x"00",
+
+        -- 0x00330263   beq x6, x3, 4     ; verify load == sum, jump to halt
+        36 => x"63", 37 => x"02", 38 => x"33", 39 => x"00",
+
         -- 0x0000007F   halt
-        20 => x"7F", 21 => x"00", 22 => x"00", 23 => x"00",
-        
+        40 => x"7F", 41 => x"00", 42 => x"00", 43 => x"00",
+
         OTHERS => (OTHERS => '0')
     );
     SIGNAL addr_int : INTEGER := 0;
