@@ -28,11 +28,10 @@ END ENTITY;
 ARCHITECTURE rtl OF combined_mem IS
 
     -- Byte-addressable RAM
-    TYPE memory_data IS ARRAY (0 TO 1023) OF STD_LOGIC_VECTOR(7 DOWNTO 0);
     SIGNAL RAM : memory_data := (
         -- Program: Calculate 5! (Factorial)
         -- Logic: x2 = x2 * x1, then x1 = x1 - 1, repeat until x1 <= 1.
-        -- Expected Result: x2 = 120 (0x78)
+        -- Expected Result: x2 = 120 (0x78) in Hex
 
         -- 0x00: addi x1, x0, 5      ; n = 5
         0  => x"93", 1  => x"00", 2  => x"50", 3  => x"00",
@@ -48,7 +47,7 @@ ARCHITECTURE rtl OF combined_mem IS
         12 => x"63", 13 => x"D8", 14 => x"11", 15 => x"00",
 
         -- 0x10: mul x2, x2, x1      ; result = result * n
-        -- Custom MUL instruction
+        -- Custom MUL instruction (bit 30 = '1')
         16 => x"33", 17 => x"01", 18 => x"11", 19 => x"42",
 
         -- 0x14: addi x1, x1, -1     ; n = n - 1
@@ -56,8 +55,9 @@ ARCHITECTURE rtl OF combined_mem IS
         20 => x"93", 21 => x"80", 22 => x"F0", 23 => x"FF",
 
         -- 0x18: beq x0, x0, -12     ; Unconditional Jump back to 0x0C
-        -- Imm: -12 (Jump back 3 instructions). 
-        24 => x"E3", 25 => x"06", 26 => x"00", 27 => x"FE",
+        -- Imm: -12. Machine Code: 0xFE000AE3
+        -- [FIXED] Byte 25 changed from 0x06 (-20) to 0x0A (-12)
+        24 => x"E3", 25 => x"0A", 26 => x"00", 27 => x"FE",
 
         -- 0x1C: halt                ; Infinite loop here
         28 => x"7F", 29 => x"00", 30 => x"00", 31 => x"00",
@@ -65,7 +65,6 @@ ARCHITECTURE rtl OF combined_mem IS
         OTHERS => (OTHERS => '0')
     );
     SIGNAL addr_int : INTEGER := 0;
-
 BEGIN
     -- Address conversion fits 1 KB
     addr_int <= to_integer(unsigned(address(9 DOWNTO 0)));
@@ -87,3 +86,4 @@ BEGIN
             RAM(addr_int);
 
 END ARCHITECTURE rtl;
+
