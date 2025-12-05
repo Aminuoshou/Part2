@@ -28,6 +28,7 @@ END ENTITY;
 ARCHITECTURE rtl OF combined_mem IS
 
     -- Byte-addressable RAM
+    TYPE memory_data IS ARRAY (0 TO 1023) OF STD_LOGIC_VECTOR(7 DOWNTO 0);
     SIGNAL RAM : memory_data := (
         -- Program: Calculate 5! (Factorial)
         -- Logic: x2 = x2 * x1, then x1 = x1 - 1, repeat until x1 <= 1.
@@ -65,6 +66,7 @@ ARCHITECTURE rtl OF combined_mem IS
         OTHERS => (OTHERS => '0')
     );
     SIGNAL addr_int : INTEGER := 0;
+
 BEGIN
     -- Address conversion fits 1 KB
     addr_int <= to_integer(unsigned(address(9 DOWNTO 0)));
@@ -86,4 +88,3 @@ BEGIN
             RAM(addr_int);
 
 END ARCHITECTURE rtl;
-
